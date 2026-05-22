@@ -1,6 +1,6 @@
 export const COLORS = {
   navy: '#0B1F3A',
-  gold: '#C8A96A',
+  gold: '#FFD700',
   white: '#FFFFFF',
   surface: '#F9FAFB',
   muted: '#6B7280',
