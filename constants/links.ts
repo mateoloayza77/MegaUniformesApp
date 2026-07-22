@@ -1,4 +1,6 @@
-export const WHATSAPP_NUMBER = '1234567890';
+// Número real de MEGA UNIFORMES (Cuenca): 099 177 1729 → formato internacional
+// para wa.me (Ecuador +593, sin el 0 inicial).
+export const WHATSAPP_NUMBER = '593991771729';
 export const WHATSAPP_BASE = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const WHATSAPP_CONTACT = `${WHATSAPP_BASE}?text=${encodeURIComponent('Hola, tengo una consulta sobre los uniformes')}`;
 
@@ -9,8 +11,16 @@ export const SOCIAL = {
 } as const;
 
 export const CONTACT = {
-  email: 'info@megauniformes.com',
-  phone: '(123) 456-7890',
-  address: 'Av. Principal 123, Cuenca, Ecuador',
-  hours: 'Lunes-Viernes 8AM-6PM, Sábados 9AM-2PM',
+  phone: '099 177 1729',
+  address: 'Cuenca, Ecuador',
+  detail: 'Atención presencial en nuestro local',
+} as const;
+
+// Ubicación física de la tienda (Cuenca, Ecuador — coordenadas del centro histórico
+// como valor por defecto). Ajusta latitude/longitude a la dirección real antes de publicar.
+export const STORE = {
+  name: 'MEGA UNIFORMES',
+  address: CONTACT.address,
+  latitude: -2.897_4,
+  longitude: -79.004_5,
 } as const;

@@ -31,7 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# Firebase Admin service account key (seed de catálogo) — NUNCA subir
+serviceAccountKey.json
 
 # typescript
 *.tsbuildinfo
@@ -41,3 +45,10 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Backend del chatbot (Python)
+server/.env
+server/venv/
+server/__pycache__/
+server/services/__pycache__/
+*.pyc

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useState } from 'react';
 import {
+  Alert,
   Image,
   Modal,
   Pressable,
@@ -13,15 +14,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COLORS } from '@/constants/colors';
+import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { navCategoryLinks } from '@/data/products';
+import { useCatalog } from '@/context/CatalogContext';
 
-const logoImage = require('@/assets/imports/WhatsApp_Image_2026-05-05_at_07.57.26.jpeg');
+const logoImage = require('@/assets/brand/logo-megauniformes.jpeg');
 
 const NAV_ITEMS = [
   { label: 'Inicio', path: '/' as const },
-  { label: 'Categorías', path: '/categorias' as const },
   { label: 'Colegios', path: '/colegios' as const },
+  { label: 'Asistente', path: '/asistente' as const },
   { label: 'Contacto', path: '/contacto' as const },
 ];
 
@@ -30,6 +32,8 @@ export function Header() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { cartCount } = useCart();
+  const { user, logout } = useAuth();
+  const { schools } = useCatalog();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navigate = (path: string) => {
@@ -39,6 +43,25 @@ export function Header() {
     } else {
       router.push(path as '/categorias');
     }
+  };
+
+  const goToLogin = () => {
+    setMenuOpen(false);
+    router.push('/login');
+  };
+
+  const confirmLogout = () => {
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Cerrar sesión',
+        style: 'destructive',
+        onPress: async () => {
+          setMenuOpen(false);
+          await logout();
+        },
+      },
+    ]);
   };
 
   return (
@@ -57,6 +80,17 @@ export function Header() {
         </TouchableOpacity>
 
         <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={goToLogin}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={user ? 'person-circle' : 'person-circle-outline'}
+              size={26}
+              color={user ? COLORS.gold : COLORS.navy}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconBtn}
             onPress={() => router.push('/carrito')}
@@ -105,16 +139,45 @@ export function Header() {
               );
             })}
 
-            <Text style={styles.sectionLabel}>CATEGORÍAS</Text>
-            {navCategoryLinks.map((link) => (
+            <Text style={styles.sectionLabel}>COLEGIOS</Text>
+            {schools.map((school) => (
               <TouchableOpacity
-                key={link.label}
+                key={school.id}
                 style={styles.subNavItem}
-                onPress={() => navigate('/categorias')}
+                onPress={() => {
+                  setMenuOpen(false);
+                  router.push({ pathname: '/colegio/[id]', params: { id: school.id } });
+                }}
               >
-                <Text style={styles.subNavText}>{link.label}</Text>
+                <Text style={styles.subNavText}>{school.name}</Text>
               </TouchableOpacity>
             ))}
+
+            <Text style={styles.sectionLabel}>CUENTA</Text>
+            {user ? (
+              <>
+                <View style={styles.accountRow}>
+                  <Ionicons name="person-circle" size={40} color={COLORS.gold} />
+                  <View style={styles.accountInfo}>
+                    <Text style={styles.accountName} numberOfLines={1}>
+                      {user.displayName || 'Mi cuenta'}
+                    </Text>
+                    <Text style={styles.accountEmail} numberOfLines={1}>
+                      {user.email}
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.logoutBtn} onPress={confirmLogout}>
+                  <Ionicons name="log-out-outline" size={20} color={COLORS.red} />
+                  <Text style={styles.logoutText}>Cerrar sesión</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <TouchableOpacity style={styles.loginBtn} onPress={goToLogin} activeOpacity={0.85}>
+                <Ionicons name="log-in-outline" size={20} color={COLORS.navy} />
+                <Text style={styles.loginText}>Iniciar sesión / Registrarme</Text>
+              </TouchableOpacity>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -193,4 +256,29 @@ const styles = StyleSheet.create({
   },
   subNavItem: { paddingVertical: 10, paddingHorizontal: 8 },
   subNavText: { fontSize: 14, color: COLORS.navy },
+
+  accountRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 8 },
+  accountInfo: { flex: 1 },
+  accountName: { fontSize: 15, fontWeight: '700', color: COLORS.navy },
+  accountEmail: { fontSize: 13, color: COLORS.muted, marginTop: 2 },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    marginTop: 4,
+  },
+  logoutText: { fontSize: 15, fontWeight: '600', color: COLORS.red },
+  loginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.gold,
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  loginText: { fontSize: 15, fontWeight: '700', color: COLORS.navy },
 });

@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// Reglas de seguridad de Cloud Firestore para MEGA UNIFORMES.
+// Publícalas en la consola de Firebase (Firestore Database → Reglas) o con la CLI:
+//   firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Datos por usuario (carrito + favoritos): cada quien lee/escribe solo lo suyo.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Pedidos: el usuario solo puede crear/leer los suyos. No se editan ni borran
+    // desde la app (eso se hace desde la consola/panel administrativo).
+    match /orders/{orderId} {
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow read:   if request.auth != null
+                    && resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Catálogo de productos: lectura pública (la tienda funciona sin login);
+    // la escritura se administra fuera de la app (consola o script con Admin SDK).
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

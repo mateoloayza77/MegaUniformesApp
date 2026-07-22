@@ -4,8 +4,11 @@ import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react
 
 import { ScreenLayout } from '@/components/ScreenLayout';
 import { COLORS } from '@/constants/colors';
+import { isFirebaseConfigured } from '@/constants/firebase';
+import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { getProductById } from '@/data/products';
+import { useCatalog } from '@/context/CatalogContext';
+import { createOrder } from '@/services/orders';
 import type { CartItem } from '@/types';
 import { toImageSource } from '@/utils/images';
 import { openWhatsApp } from '@/utils/whatsapp';
@@ -18,6 +21,8 @@ const COLOR_LABELS: Record<string, string> = {
 
 export default function CarritoScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { getProductById } = useCatalog();
   const { items, subtotal, updateQuantity, removeFromCart, clearCart } = useCart();
 
   const buildWhatsAppMessage = () => {
@@ -28,6 +33,34 @@ export default function CarritoScreen() {
       return `• ${name} - Talla ${item.size} - Color ${COLOR_LABELS[item.color] ?? item.color} x${item.quantity} = $${lineTotal.toFixed(2)}`;
     });
     return `Hola, quiero realizar este pedido:\n\n${lines.join('\n')}\n\nTotal: $${subtotal.toFixed(2)}`;
+  };
+
+  const handleCheckout = () => {
+    // Guardamos una copia del pedido en Firestore solo si hay usuario logueado
+    // (las reglas de seguridad exigen `uid`). Es best-effort y no bloquea WhatsApp:
+    // el pedido anónimo igual se envía por el chat.
+    if (isFirebaseConfigured && user) {
+      const orderItems = items.map((item) => {
+        const product = getProductById(item.productId);
+        return {
+          productId: item.productId,
+          name: product?.name ?? item.productId,
+          price: product?.price ?? 0,
+          size: item.size,
+          color: item.color,
+          quantity: item.quantity,
+        };
+      });
+      createOrder({
+        uid: user.uid,
+        customerName: user.displayName ?? null,
+        items: orderItems,
+        subtotal,
+      }).catch(() => {
+        // Silencioso: el pedido igual sale por WhatsApp aunque falle el guardado.
+      });
+    }
+    openWhatsApp(buildWhatsAppMessage());
   };
 
   const renderItem = ({ item }: { item: CartItem }) => {
@@ -110,7 +143,7 @@ export default function CarritoScreen() {
         </View>
         <TouchableOpacity
           style={styles.checkoutBtn}
-          onPress={() => openWhatsApp(buildWhatsAppMessage())}
+          onPress={handleCheckout}
           activeOpacity={0.85}
         >
           <Ionicons name="logo-whatsapp" size={22} color={COLORS.white} />

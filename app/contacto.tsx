@@ -6,15 +6,14 @@ import { COLORS } from '@/constants/colors';
 import { CONTACT, WHATSAPP_CONTACT } from '@/constants/links';
 
 const contactBlocks = [
-  { icon: 'mail-outline' as const, label: 'Email', value: CONTACT.email, href: `mailto:${CONTACT.email}` },
   {
     icon: 'call-outline' as const,
-    label: 'Teléfono',
+    label: 'Teléfono / WhatsApp',
     value: CONTACT.phone,
     href: `tel:${CONTACT.phone.replace(/\D/g, '')}`,
   },
-  { icon: 'location-outline' as const, label: 'Dirección', value: CONTACT.address },
-  { icon: 'time-outline' as const, label: 'Horario', value: CONTACT.hours },
+  { icon: 'location-outline' as const, label: 'Ubicación', value: CONTACT.address, href: undefined },
+  { icon: 'storefront-outline' as const, label: 'Atención', value: CONTACT.detail, href: undefined },
 ];
 
 export default function ContactoScreen() {

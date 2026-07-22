@@ -1,9 +1,12 @@
 export const COLORS = {
   navy: '#0B1F3A',
-  gold: '#FFD700',
+  navySoft: '#142C4D',
+  gold: '#C8A96A',
   white: '#FFFFFF',
-  surface: '#F9FAFB',
-  muted: '#6B7280',
+  surface: '#F5F7FA',
+  text: '#142033',
+  muted: '#637083',
+  border: '#E6E9EF',
   whatsapp: '#25D366',
   red: '#DC2626',
 } as const;

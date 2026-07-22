@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-dotenv
+openai
+pydantic
+# pandas y openpyxl solo se necesitan para re-importar el Excel con
+# importar_inventario.py (no en tiempo de ejecución del servidor).

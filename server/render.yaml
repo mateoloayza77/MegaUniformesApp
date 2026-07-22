@@ -1,0 +1,15 @@
+# Blueprint de Render para el backend del chatbot.
+# En Render: New → Blueprint → apunta a este repositorio (rootDir = server).
+services:
+  - type: web
+    name: megauniformes-api
+    runtime: python
+    rootDir: server
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openai/gpt-4o-mini

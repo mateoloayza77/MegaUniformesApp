@@ -3,10 +3,12 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { ProductCard } from '@/components/ProductCard';
 import { ScreenLayout } from '@/components/ScreenLayout';
 import { COLORS } from '@/constants/colors';
-import { categories, getProductsByCategory } from '@/data/products';
+import { useCatalog } from '@/context/CatalogContext';
+import { categories } from '@/data/products';
 import { toImageSource } from '@/utils/images';
 
 export default function CategoriasScreen() {
+  const { getProductsByCategory } = useCatalog();
   return (
     <ScreenLayout>
       <View style={styles.hero}>

@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/Header';
 import { COLORS } from '@/constants/colors';
 import { useCart } from '@/context/CartContext';
-import { getProductById } from '@/data/products';
+import { useCatalog } from '@/context/CatalogContext';
 import { toImageSource } from '@/utils/images';
 import { openWhatsApp } from '@/utils/whatsapp';
 
@@ -31,6 +31,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { getProductById } = useCatalog();
   const product = id ? getProductById(id) : undefined;
   const { isFavorite, toggleFavorite, addToCart } = useCart();
   const [selectedColor, setSelectedColor] = useState<(typeof COLORS_OPTIONS)[number]['id']>('white');

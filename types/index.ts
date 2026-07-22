@@ -6,6 +6,10 @@ export interface Product {
   price: number;
   category: ProductCategory;
   categoryLabel: string;
+  /** id del colegio al que pertenece la prenda (ver `schools`). */
+  school: string;
+  /** nombre visible del colegio (para mostrar sin resolver el id). */
+  schoolLabel: string;
   image: string;
   onPromotion?: boolean;
   description?: string;
@@ -31,6 +35,14 @@ export interface School {
   id: string;
   name: string;
   initials: string;
+  slug: string;
+  /** Foto real del colegio (asset bundled) o URL. */
+  image: HeroImageSource;
+  /** Frase corta para la tarjeta. */
+  tagline: string;
+  description: string;
+  /** Características destacadas que se muestran en la tarjeta/detalle. */
+  features: string[];
 }
 
 export interface CartItem {

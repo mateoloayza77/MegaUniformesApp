@@ -2,12 +2,16 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 
-import { getProductById } from '@/data/products';
+import { useAuth } from '@/context/AuthContext';
+import { useCatalog } from '@/context/CatalogContext';
+import { loadUserData, saveUserData } from '@/services/userData';
 import type { CartItem } from '@/types';
 
 interface CartContextValue {
@@ -31,8 +35,58 @@ function itemKey(productId: string, size: string, color: string) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { getProductById } = useCatalog();
   const [items, setItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set());
+
+  // Guarda el uid para el que ya hidratamos el estado desde Firestore. Evita que
+  // el efecto de guardado escriba con el estado en memoria antes de haber leído lo
+  // remoto (lo que borraría el carrito guardado del usuario).
+  const hydratedUid = useRef<string | null>(null);
+
+  // Al iniciar sesión: cargar carrito + favoritos desde Firestore. Si el doc no
+  // existe, conservamos lo que haya en memoria (el efecto de guardado lo subirá).
+  useEffect(() => {
+    const uid = user?.uid ?? null;
+    if (!uid) {
+      hydratedUid.current = null;
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await loadUserData(uid);
+        if (cancelled) return;
+        if (data) {
+          setItems(data.cart);
+          setFavorites(new Set(data.favorites));
+        }
+        hydratedUid.current = uid;
+      } catch {
+        // Si falla la lectura, seguimos con el estado en memoria (modo offline).
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
+
+  // Persistir cambios en Firestore (con un pequeño debounce). Solo tras haber
+  // hidratado para el usuario actual, para no pisar lo remoto con estado vacío.
+  useEffect(() => {
+    const uid = user?.uid ?? null;
+    if (!uid || hydratedUid.current !== uid) return;
+    const timeout = setTimeout(() => {
+      saveUserData(uid, {
+        cart: items,
+        favorites: Array.from(favorites),
+      }).catch(() => {
+        // Guardado best-effort; los cambios siguen en memoria.
+      });
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [items, favorites, user?.uid]);
 
   const toggleFavorite = useCallback((productId: string) => {
     setFavorites((prev) => {
@@ -103,7 +157,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getLineTotal = useCallback((item: CartItem) => {
     const product = getProductById(item.productId);
     return (product?.price ?? 0) * item.quantity;
-  }, []);
+  }, [getProductById]);
 
   const cartCount = useMemo(
     () => items.reduce((sum, i) => sum + i.quantity, 0),
