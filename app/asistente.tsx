@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/Header';
 import { COLORS } from '@/constants/colors';
 import { isChatbotConfigured } from '@/constants/chatbot';
-import { sendChatMessage, type ChatProduct } from '@/services/chatbot';
+import { sendChatMessage, warmUpChatbot, type ChatProduct } from '@/services/chatbot';
 import { openWhatsApp } from '@/utils/whatsapp';
 
 interface UIMessage {
@@ -42,6 +42,12 @@ export default function AsistenteScreen() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+
+  // Al abrir el asistente, "despertamos" el backend de Render en segundo plano
+  // para que el primer mensaje no espere el arranque en frío (~30-60 s dormido).
+  useEffect(() => {
+    warmUpChatbot();
+  }, []);
 
   const scrollToEnd = () => {
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
@@ -103,6 +109,8 @@ export default function AsistenteScreen() {
             style={styles.waPill}
             onPress={() => openWhatsApp('Hola, quiero hablar con un asesor de MEGA UNIFORMES')}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Hablar con un asesor por WhatsApp"
           >
             <Ionicons name="logo-whatsapp" size={16} color={COLORS.white} />
             <Text style={styles.waPillText}>Asesor</Text>
@@ -115,6 +123,7 @@ export default function AsistenteScreen() {
           contentContainerStyle={styles.messagesContent}
           onContentSizeChange={scrollToEnd}
           showsVerticalScrollIndicator={false}
+          accessibilityLabel="Conversación con el asistente"
         >
           {!isChatbotConfigured && (
             <View style={styles.notice}>
@@ -152,7 +161,10 @@ export default function AsistenteScreen() {
           ))}
 
           {sending && (
-            <View style={[styles.bubble, styles.bubbleBot, styles.typing]}>
+            <View
+              style={[styles.bubble, styles.bubbleBot, styles.typing]}
+              accessibilityLabel="El asistente está escribiendo"
+            >
               <ActivityIndicator size="small" color={COLORS.muted} />
               <Text style={styles.typingText}>El asistente está escribiendo…</Text>
             </View>
@@ -169,12 +181,16 @@ export default function AsistenteScreen() {
             editable={isChatbotConfigured && !sending}
             onSubmitEditing={handleSend}
             returnKeyType="send"
+            accessibilityLabel="Escribe tu consulta para el asistente"
           />
           <TouchableOpacity
             style={[styles.sendBtn, (!isChatbotConfigured || sending) && styles.sendBtnDisabled]}
             onPress={handleSend}
             disabled={!isChatbotConfigured || sending}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Enviar mensaje"
+            accessibilityState={{ disabled: !isChatbotConfigured || sending }}
           >
             <Ionicons name="send" size={18} color={COLORS.navy} />
           </TouchableOpacity>

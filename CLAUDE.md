@@ -22,21 +22,36 @@ npm run reset-project  # ⚠️ moves current app/ to app-example/ and scaffolds
 
 There is no test runner configured. Type-check with `npx tsc --noEmit`.
 
-**Firebase env.** Auth reads its config from `EXPO_PUBLIC_FIREBASE_*` vars in `.env` (git-ignored;
-template in `.env.example`). Copy `.env.example` → `.env` and fill in real Firebase keys, then enable
-Email/Password in the Firebase console. Until real keys are present, `isFirebaseConfigured` is `false`
-and the login screen shows a warning instead of crashing.
+**Env vars** (all `.env`, git-ignored; template in `.env.example`; `EXPO_PUBLIC_*` are baked into the
+bundle — not secret). `EXPO_PUBLIC_FIREBASE_*`: Auth/Firestore config — until real keys are present
+`isFirebaseConfigured` is `false` and the login screen shows a warning instead of crashing. Enable
+Email/Password in the Firebase console after filling them in. `EXPO_PUBLIC_CHATBOT_API_URL`: base URL
+of the chatbot backend — leave empty and the app still runs (`isChatbotConfigured` is `false`, the
+Asistente screen shows a notice and offers WhatsApp).
+
+**Chatbot backend** (`server/`, its own FastAPI app, deployed separately — Render). Python/uvicorn,
+**not** part of the Expo build and **not** Firebase. It answers `POST /chat` from `inventario.db`
+(SQLite: colegios/prendas/géneros/tallas — but stock and price are `0` by design, so it never invents
+prices and routes to WhatsApp to confirm) plus an LLM via **OpenRouter** (OpenAI SDK pointed at
+OpenRouter, `OPENROUTER_MODEL` default `openai/gpt-4o-mini`, `OPENROUTER_API_KEY` server-side only).
+CORS is open. See `server/README.md` to run locally (`uvicorn main:app --reload`; Android emulator
+reaches it at `http://10.0.2.2:8000`) or re-import the Excel with `server/importar_inventario.py`.
 
 ## Architecture
 
 MEGA UNIFORMES is a single-vendor storefront (school uniforms, Cuenca–Ecuador). The catalog is
-**static data with no payment flow** — checkout hands off to WhatsApp. The one server-backed piece is
-**Firebase Authentication** (email/password) for an *optional* login; the store still works fully
-anonymously. All user-facing copy is in **Spanish** — keep it that way (route segments are Spanish
-too, e.g. `producto/[id]`).
+**static data with no payment flow** — checkout hands off to WhatsApp. Two server-backed pieces, both
+*optional* (the store works fully anonymously and offline): **Firebase Authentication** (email/password
+login + Firestore cart/order sync) and the **chatbot backend** (see above) behind the Asistente screen.
+All user-facing copy is in **Spanish** — keep it that way (route segments are Spanish too, e.g.
+`producto/[id]`, `colegio/[id]`).
 
-**Screens.** `index` (home), `categorias`, `colegios`, `contacto`, `carrito` (cart), `servicios`,
-`login`, and `producto/[id]` (product detail). `login.tsx` is a full-screen auth card (login/register
+**Screens.** `index` (home — promotions, school grid, and a CTA into the AI assistant), `categorias`,
+`colegios` (school grid via `SchoolCard`), `colegio/[id]` (school detail: hero + that school's
+garments), `asistente` (chatbot UI), `contacto`, `carrito` (cart), `servicios`, `login`, and
+`producto/[id]` (product detail). `asistente.tsx` posts to the chatbot backend via
+`services/chatbot.ts` and renders returned product chips; when `isChatbotConfigured` is false the input
+is disabled and it points users to WhatsApp. `login.tsx` is a full-screen auth card (login/register
 toggle, show-password, forgot-password) presented modally (`slide_from_bottom`); reachable from the
 `Header` person icon and the drawer's "CUENTA" section, and always dismissible ("Continuar sin
 cuenta"). `servicios.tsx` is the only screen that touches native device APIs:
@@ -83,13 +98,18 @@ components: `services/userData.ts` (load/save user doc), `services/orders.ts` (`
 caller passes items already resolved to name+price so the historical order is price-stable), and
 `services/catalog.ts` (`fetchCatalog`).
 
-**Data / catalog.** `data/products.ts` holds the static catalog + `categories`, `heroSlides`,
-`schools`, `navCategoryLinks`. Products are **hybrid**: `context/CatalogContext.tsx` (`useCatalog()`
-hook) starts from the static `products` array (instant, offline-capable fallback) and, if Firestore
-has documents, replaces them. **Screens read products only through `useCatalog()`** (`products`,
-`promotionProducts`, `getProductById`, `getProductsByCategory`) — never import product helpers from
-`data/products.ts` directly (those remain as the fallback source + seed reference). `categories`,
-`heroSlides`, `schools` stay static (config, not inventory). Seed Firestore from the static catalog
+**Data / catalog.** Shared types live in `types/index.ts` (imported as `@/types`): `Product`,
+`School`, `CategoryInfo`, `HeroSlide`, `CartItem`, etc. `data/products.ts` holds the static catalog +
+`categories`, `heroSlides`, `schools`, `navCategoryLinks`. The catalog is **organized by school**:
+each `Product` carries `school` (a school id) + `schoolLabel`, and the static `products` array is
+generated by `buildProducts()` from per-school garment templates. Products are also **hybrid**:
+`context/CatalogContext.tsx` (`useCatalog()` hook) starts from the static `products` array (instant,
+offline-capable fallback) and, if Firestore has documents, replaces them. **Screens read products
+and schools only through `useCatalog()`** (`products`, `promotionProducts`, `schools`,
+`getProductById`, `getProductsByCategory`, `getProductsBySchool`, `getSchoolById`) — never import
+product/school helpers from `data/products.ts` directly (those remain as the fallback source + seed
+reference). `categories`, `heroSlides`, `schools` stay static (config, not inventory) — note only
+`products` are ever replaced by Firestore. Seed Firestore from the static catalog
 with `npm run seed:catalog` (`scripts/seed-catalog.mjs`, firebase-admin; needs a service-account key —
 see the script header; `serviceAccountKey.json` is git-ignored). Product images are remote Unsplash
 URLs (strings); hero/logo images are bundled `require(...)` assets. `utils/images.ts` bridges the two:
@@ -107,8 +127,8 @@ lat/long — **also must be set to the real address before release**).
 `utils/geo.ts` provides `distanceKm` (haversine) + `formatDistance`. Both are used only by `servicios.tsx`.
 
 **Styling.** No UI library — everything is `StyleSheet.create` with the brand palette in
-`constants/colors.ts` (`COLORS`: navy/gold/white/surface/muted/whatsapp/red). Import `COLORS` rather
-than hardcoding hex values.
+`constants/colors.ts` (`COLORS`: navy/navySoft/gold/white/surface/text/muted/border/whatsapp/red).
+Import `COLORS` rather than hardcoding hex values.
 
 **Path alias.** `@/*` maps to the repo root (`tsconfig.json`), e.g. `@/components/Header`,
 `@/context/CartContext`.

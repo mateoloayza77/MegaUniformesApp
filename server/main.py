@@ -498,9 +498,13 @@ def filtrar_productos_exactos(
             or prenda_producto in prenda_buscada
         )
 
+        # Una prenda "Unisex" sirve tanto para hombre como para mujer, así que
+        # coincide con cualquier género que pida el cliente (la mayoría del
+        # inventario es Unisex; sin esto casi nada calzaría con la consulta).
         coincide_genero = (
             not genero_buscado
             or genero_buscado == genero_producto
+            or genero_producto == "unisex"
         )
 
         coincide_talla = (

@@ -71,8 +71,10 @@ export function Header() {
           style={styles.logoRow}
           onPress={() => router.push('/')}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="MEGA UNIFORMES, ir al inicio"
         >
-          <Image source={logoImage} style={styles.logo} />
+          <Image source={logoImage} style={styles.logo} accessibilityIgnoresInvertColors />
           <View>
             <Text style={styles.logoMega}>MEGA</Text>
             <Text style={styles.logoUniformes}>UNIFORMES</Text>
@@ -84,6 +86,8 @@ export function Header() {
             style={styles.iconBtn}
             onPress={goToLogin}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={user ? 'Mi cuenta' : 'Iniciar sesión'}
           >
             <Ionicons
               name={user ? 'person-circle' : 'person-circle-outline'}
@@ -95,6 +99,10 @@ export function Header() {
             style={styles.iconBtn}
             onPress={() => router.push('/carrito')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={
+              cartCount > 0 ? `Carrito, ${cartCount} artículos` : 'Carrito, vacío'
+            }
           >
             <Ionicons name="cart-outline" size={24} color={COLORS.navy} />
             {cartCount > 0 && (
@@ -107,6 +115,8 @@ export function Header() {
             style={styles.iconBtn}
             onPress={() => setMenuOpen(true)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir menú"
           >
             <Ionicons name="menu" size={26} color={COLORS.navy} />
           </TouchableOpacity>
@@ -118,7 +128,11 @@ export function Header() {
           <Pressable style={[styles.drawer, { paddingTop: insets.top + 16 }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.drawerHeader}>
               <Text style={styles.drawerTitle}>Menú</Text>
-              <TouchableOpacity onPress={() => setMenuOpen(false)}>
+              <TouchableOpacity
+                onPress={() => setMenuOpen(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar menú"
+              >
                 <Ionicons name="close" size={28} color={COLORS.navy} />
               </TouchableOpacity>
             </View>

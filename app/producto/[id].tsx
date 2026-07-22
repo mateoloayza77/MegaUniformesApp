@@ -101,7 +101,13 @@ export default function ProductDetailScreen() {
               <Text style={styles.promoText}>PROMOCIÓN</Text>
             </View>
           )}
-          <TouchableOpacity style={styles.favBtn} onPress={() => toggleFavorite(product.id)}>
+          <TouchableOpacity
+            style={styles.favBtn}
+            onPress={() => toggleFavorite(product.id)}
+            accessibilityRole="button"
+            accessibilityLabel={favorited ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+            accessibilityState={{ selected: favorited }}
+          >
             <Ionicons
               name={favorited ? 'heart' : 'heart-outline'}
               size={26}
@@ -161,11 +167,18 @@ export default function ProductDetailScreen() {
             <TouchableOpacity
               style={styles.qtyBtn}
               onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+              accessibilityRole="button"
+              accessibilityLabel="Disminuir cantidad"
             >
               <Text style={styles.qtyBtnText}>−</Text>
             </TouchableOpacity>
             <Text style={styles.qtyValue}>{quantity}</Text>
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity((q) => q + 1)}>
+            <TouchableOpacity
+              style={styles.qtyBtn}
+              onPress={() => setQuantity((q) => q + 1)}
+              accessibilityRole="button"
+              accessibilityLabel="Aumentar cantidad"
+            >
               <Text style={styles.qtyBtnText}>+</Text>
             </TouchableOpacity>
           </View>

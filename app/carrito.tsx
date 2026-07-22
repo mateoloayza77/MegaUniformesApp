@@ -82,6 +82,8 @@ export default function CarritoScreen() {
             <TouchableOpacity
               style={styles.qtyBtn}
               onPress={() => updateQuantity(item.productId, item.size, item.color, item.quantity - 1)}
+              accessibilityRole="button"
+              accessibilityLabel="Disminuir cantidad"
             >
               <Text style={styles.qtyBtnText}>−</Text>
             </TouchableOpacity>
@@ -89,12 +91,16 @@ export default function CarritoScreen() {
             <TouchableOpacity
               style={styles.qtyBtn}
               onPress={() => updateQuantity(item.productId, item.size, item.color, item.quantity + 1)}
+              accessibilityRole="button"
+              accessibilityLabel="Aumentar cantidad"
             >
               <Text style={styles.qtyBtnText}>+</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.removeBtn}
               onPress={() => removeFromCart(item.productId, item.size, item.color)}
+              accessibilityRole="button"
+              accessibilityLabel="Quitar del carrito"
             >
               <Ionicons name="trash-outline" size={20} color={COLORS.red} />
             </TouchableOpacity>

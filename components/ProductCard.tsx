@@ -23,6 +23,8 @@ export function ProductCard({ product }: ProductCardProps) {
       onPress={() =>
         router.push({ pathname: '/producto/[id]', params: { id: product.id } })
       }
+      accessibilityRole="button"
+      accessibilityLabel={`${product.name}, desde $${product.price.toFixed(2)}. Ver detalle`}
     >
       <View style={styles.imageWrap}>
         <Image source={toImageSource(product.image)} style={styles.image} resizeMode="cover" />
@@ -35,6 +37,9 @@ export function ProductCard({ product }: ProductCardProps) {
           style={styles.favBtn}
           onPress={() => toggleFavorite(product.id)}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={favorited ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+          accessibilityState={{ selected: favorited }}
         >
           <Ionicons
             name={favorited ? 'heart' : 'heart-outline'}
